@@ -1,3 +1,13 @@
+----------------------------------------
+-- print() replacement
+-- Using print() with a single argument will pretty print tables
+-- Using print() with multiple arguments will use the standard print() function
+-- 
+-- @author Björn Ritzl
+-- @license Apache License 2.0
+-- @github https://github.com/britzl/prettyprint
+----------------------------------------
+
 -- keep the original print()
 local _print = print
 
