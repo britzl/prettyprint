@@ -20,6 +20,11 @@ local function print_table(value)
 	_print(indentation .. "{")
 	indentation = indentation .. "\t"
 	for name,data in pairs(value) do
+		if type(name) == "string" then
+			name = '"'..name..'"'
+		else
+			name = tostring(name)
+		end
 		local dt = type(data)
 		if dt == "table" then
 			_print(indentation .. name .. " =")
