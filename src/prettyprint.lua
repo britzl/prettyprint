@@ -13,39 +13,37 @@ local _print = print
 
 local indentation = ""
 
---- Pretty print a value
--- If the value is a table it's content will be printed as well (recursively)
-local function pretty_print(value)
-	local t = type(value)
-	if t == "nil" then
-		_print(indentation .. "nil")
-	elseif t ~= "table" then
-		_print(indentation .. value)
-	else
-		_print(indentation .. "{")
-		indentation = indentation .. "\t"
-		for name,data in pairs(value) do
-			if type(data) == "table" then
-				_print(indentation .. name .. " =")
-				pretty_print(data)
-			else
-				_print(indentation .. name .. " = " .. tostring(data))
-			end
+--- 
+-- Pretty print a table and it's contents (recursively)
+-- @param #table value The table to print
+local function print_table(value)
+	_print(indentation .. "{")
+	indentation = indentation .. "\t"
+	for name,data in pairs(value) do
+		local dt = type(data)
+		if dt == "table" then
+			_print(indentation .. name .. " =")
+			print_table(data)
+		elseif dt == "string" then
+			_print(indentation .. name .. ' = "' .. tostring(data) .. '"')
+		else
+			_print(indentation .. name .. " = " .. tostring(data))
 		end
-		indentation = indentation:sub(1,#indentation-1)
-		_print(indentation .. "}")
 	end
+	indentation = indentation:sub(1,#indentation-1)
+	_print(indentation .. "}")
 end
 
---- Improved print() function
--- If multiple arguments are passed they will be printed using the normal
--- print() function.
--- If a single argument is passed it will be pretty printed if it's a table
+--- 
+-- Improved print() function
+-- If a single argument is passed and it's a table it will be pretty printed,
+-- otherwise the argument(s) will be passed to the normal print() function
 local function improved_print(...)
-	if select('#',...) > 1 then
-		_print(...)
+	local arg_count = select('#',...)
+	if arg_count == 1 and type(select(1, ...)) == "table" then
+		print_table(select(1, ...))
 	else
-		pretty_print(select(1, ...))
+		_print(...)
 	end
 end
 
