@@ -10,7 +10,9 @@
 
 local pp = {
 	print = print,
-	indentation = "\t"
+	indentation = "\t",
+	-- list of keys to ignore when printing tables
+	ignore = nil,
 }
 
 
@@ -33,26 +35,40 @@ local function improved_print(...)
 		pp.print(current_indentation .. s)
 	end
 
+	local function is_ignored(name)
+		if not pp.ignore then
+			return false
+		end
+		for _,ignored in pairs(pp.ignore) do
+			if name == ignored then
+				return true
+			end
+		end
+		return false
+	end
+
 	local function print_table(value)
 		prindented("{")
 		indent_more()
 		for name,data in pairs(value) do
-			if type(name) == "string" then
-				name = '"'..name..'"'
-			else
-				name = tostring(name)
-			end
-			local dt = type(data)
-			if dt == "table" then
-				prindented(name .. " = [".. tostring(data) .. "]")
-				if not printed_tables[data] then
-					printed_tables[data] = true
-					print_table(data)
+			if not is_ignored(name) then
+				if type(name) == "string" then
+					name = '"'..name..'"'
+				else
+					name = tostring(name)
 				end
-			elseif dt == "string" then
-				prindented(name .. ' = "' .. tostring(data) .. '"')
-			else
-				prindented(name .. " = " .. tostring(data))
+				local dt = type(data)
+				if dt == "table" then
+					prindented(name .. " = [".. tostring(data) .. "]")
+					if not printed_tables[data] then
+						printed_tables[data] = true
+						print_table(data)
+					end
+				elseif dt == "string" then
+					prindented(name .. ' = "' .. tostring(data) .. '"')
+				else
+					prindented(name .. " = " .. tostring(data))
+				end
 			end
 		end
 		indent_less()
