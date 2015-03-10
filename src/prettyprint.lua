@@ -15,66 +15,72 @@ local pp = {
 	ignore = nil,
 }
 
+-- keep track of printed tables to avoid infinite loops
+-- when tables refer to each other
+local printed_tables = {}
 
-local function improved_print(...)
-	-- keep track of printed tables to avoid infinite loops
-	-- when tables refer to each other
-	local printed_tables = {}
+local current_indentation = ""
 
-	local current_indentation = ""
-
-	local function indent_more()
-		current_indentation = current_indentation .. pp.indentation
-	end
-
-	local function indent_less()
-		current_indentation = current_indentation:sub(1, #current_indentation - #pp.indentation)
-	end
-
-	local function prindented(s)
-		pp.print(current_indentation .. s)
-	end
-
-	local function is_ignored(name)
-		if not pp.ignore then
-			return false
-		end
-		for _,ignored in pairs(pp.ignore) do
-			if name == ignored then
-				return true
-			end
-		end
+--- Check if a name is ignore
+-- Ignored names are configured in pp.ignore
+-- @param name
+-- @return true if name exists in table of ignored names
+local function is_ignored(name)
+	if not pp.ignore then
 		return false
 	end
+	for _,ignored in pairs(pp.ignore) do
+		if name == ignored then
+			return true
+		end
+	end
+	return false
+end
 
-	local function print_table(value)
-		prindented("{")
-		indent_more()
-		for name,data in pairs(value) do
-			if not is_ignored(name) then
-				if type(name) == "string" then
-					name = '"'..name..'"'
-				else
-					name = tostring(name)
+local function indent_more()
+	current_indentation = current_indentation .. pp.indentation
+end
+
+local function indent_less()
+	current_indentation = current_indentation:sub(1, #current_indentation - #pp.indentation)
+end
+
+--- Format a table into human readable output
+-- For every line in the human readable output a callback will be invoked. If no
+-- callback is specified print() will be used.
+-- @param value The value to convert into a human readable format
+-- @param callback Function to call for each line of human readable output
+function pp.format_table(value, callback)
+	callback = callback or pp.print
+
+	callback(current_indentation .. "{")
+	indent_more()
+	for name,data in pairs(value) do
+		if not is_ignored(name) then
+			if type(name) == "string" then
+				name = '"'..name..'"'
+			else
+				name = tostring(name)
+			end
+			local dt = type(data)
+			if dt == "table" then
+				callback(current_indentation .. name .. " = [".. tostring(data) .. "]")
+				if not printed_tables[data] then
+					printed_tables[data] = true
+					pp.format_table(data, callback)
 				end
-				local dt = type(data)
-				if dt == "table" then
-					prindented(name .. " = [".. tostring(data) .. "]")
-					if not printed_tables[data] then
-						printed_tables[data] = true
-						print_table(data)
-					end
-				elseif dt == "string" then
-					prindented(name .. ' = "' .. tostring(data) .. '"')
-				else
-					prindented(name .. " = " .. tostring(data))
-				end
+			elseif dt == "string" then
+				callback(current_indentation .. name .. ' = "' .. tostring(data) .. '"')
+			else
+				callback(current_indentation .. name .. " = " .. tostring(data))
 			end
 		end
-		indent_less()
-		prindented("}")
 	end
+	indent_less()
+	callback(current_indentation .. "}")
+end
 
+local function improved_print(...)
 	-- iterate through each of the arguments and print them one by one
 	local args = { ... }
 	table.remove(args, 1)
@@ -83,7 +89,9 @@ local function improved_print(...)
 		if type(v) == "table" then
 			pp.print(s)
 			s = ""
-			print_table(v)
+			printed_tables = {}
+			current_indentation = ""
+			pp.format_table(v, pp.print)
 		else
 			s = s .. tostring(v) .. "\t"
 		end

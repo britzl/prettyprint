@@ -10,9 +10,9 @@ local some_table = {
 	fn = function() end,
 }
 
-print(some_table)
+print("Printing entire table", some_table)
 
 -- ignore table keys named "foo" and "key"
 print.ignore = { "foo", "key" }
 
-print(some_table)
+print("Printing table with ignored values", some_table)
