@@ -16,3 +16,5 @@ print("Printing entire table", some_table)
 print.ignore = { "foo", "key" }
 
 print("Printing table with ignored values", some_table)
+
+print("Printing table from string", print.tostring(some_table))

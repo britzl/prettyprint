@@ -80,21 +80,30 @@ function pp.format_table(value, callback)
 	callback(current_indentation .. "}")
 end
 
+--- Convert value to a human readable string. If the value to convert is a table
+-- it will be formatted using format_table() and returned as a string
+-- @param value
+-- @return String representation of value
+function pp.tostring(value)
+	if type(value) ~= "table" then
+		return tostring(value)
+	end
+	local s = ""
+	printed_tables = {}
+	current_indentation = ""
+	pp.format_table(value, function(line)
+		s = s .. line .. "\n"
+	end)
+	return s
+end
+
 local function improved_print(...)
 	-- iterate through each of the arguments and print them one by one
 	local args = { ... }
 	table.remove(args, 1)
 	local s = ""
 	for _, v in pairs(args) do
-		if type(v) == "table" then
-			pp.print(s)
-			s = ""
-			printed_tables = {}
-			current_indentation = ""
-			pp.format_table(v, pp.print)
-		else
-			s = s .. tostring(v) .. "\t"
-		end
+		s = s .. pp.tostring(v) .. "\t"
 	end
 	pp.print(s)
 end
